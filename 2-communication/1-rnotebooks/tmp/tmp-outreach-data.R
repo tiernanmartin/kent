@@ -39,6 +39,11 @@ col_types_list_surv <-
        rerun(15,col_logical())
   ) %>% flatten()
 
+col_types_list_qs <- 
+  list(rerun(5,col_character()), 
+       rerun(3,col_logical())
+  ) %>% flatten()
+
 discussion_data <- 
   data_sheet %>% 
   gs_read(ws = "Discussion Data", 
@@ -57,5 +62,24 @@ survey_data <-
           col_types = col_types_list_surv) %>% 
   set_colnames(str_replace_all(colnames(.),"\\s","_")) 
 
+questions_data <- 
+  data_sheet %>% 
+  gs_read(ws = "Questions",
+          range = cell_limits(c(2,2),c(NA,9)),
+          colnames = TRUE,
+          col_types = col_types_list_qs) %>% 
+  set_colnames(str_replace_all(colnames(.),"\\s","_")) %>% 
+  set_colnames(str_replace_all(colnames(.),"\\(|\\)","")) 
+
 # Transform the data ----
 
+# make survey data long
+
+d <- discussion_data
+
+q <- questions_data %>% select(QUESTION_ID, QUESTION_TEXT_SHORT,TOPIC)
+
+s <- 
+  survey_data %>% 
+  gather(QUESTION_ID, RESPONSE, Q16:Q15) %>% 
+  left_join(q, by = "QUESTION_ID")
