@@ -39,7 +39,7 @@ col_types_list_surv <-
   list(rerun(4,col_character()),
        list(col_logical()),
        rerun(11,col_character()),
-       rerun(15,col_logical())
+       rerun(17,col_logical())
   ) %>% flatten()
 
 col_types_list_qs <- 
@@ -59,7 +59,7 @@ discussion_data <-
 survey_data <- 
   data_sheet %>% 
   gs_read(ws = "Survey Data", 
-          range = cell_limits(c(4, 2), c(NA, 32)), 
+          range = cell_limits(c(4, 2), c(NA, 34)), 
           colnames = TRUE,
           na = c("","#N/A"),
           col_types = col_types_list_surv) %>% 
@@ -106,7 +106,7 @@ comb <- bind_rows(d,s)
 # Home issues
 
 issues_fp <- "./1-data/4-ready/east-hill-issues.csv" # where the data will be save locally
-issues_name <- "home-issues" # the name of the file in Google Drive
+issues_drive_path <- "~/Futurewise/Kent Rental Inspection/1-data/4-ready/home-issues" 
 
 
 comb %>% 
@@ -119,9 +119,10 @@ comb %>%
             N_WEST = sum(if_else(as.logical(RESPONSE) & FORUM %in% "West Hill",TRUE,FALSE))) %>% 
   arrange(desc(N_TRUE)) %>% 
   write_csv(issues_fp)
+
+# drive_upload(issues_fp,issues_drive_path) # first time this script was run the file was uploaded
   
-drive_issue_id <- if(!exists('drive_issue_id')){drive_find(pattern = issues_name) %>% as_id()}else{drive_issue_id} # create drive id 
-# drive_issue_id <- drive_find(pattern = issues_name) %>% as_id()
+drive_issue_id <- if(!exists('drive_issue_id')){drive_get(path = issues_drive_path) %>% as_id()}else{drive_issue_id} # create drive id 
 
 drive_update(drive_issue_id,issues_fp)
 
@@ -130,6 +131,7 @@ drive_update(drive_issue_id,issues_fp)
 # Q17 (Comfortable with home inspection)
 
 comfort_fp <- "./1-data/4-ready/comfort-levels.csv" # where the data will be save locally
+comfort_drive_path <- "~/Futurewise/Kent Rental Inspection/1-data/4-ready/comfort-levels" 
 comfort_name <- "comfort-levels" # the name of the file in Google Drive
 
 comb %>% 
@@ -147,6 +149,8 @@ comb %>%
   select_all(toupper) %>% 
   write_csv(comfort_fp)
 
-drive_comfort_id <- if(!exists('drive_comfort_id')){drive_find(pattern = comfort_name) %>% as_id()}else{drive_comfort_id}
+# drive_upload(comfort_fp,comfort_drive_path) # first time this script was run the file was uploaded
+
+drive_comfort_id <- if(!exists('drive_comfort_id')){drive_get(path = comfort_drive_path) %>% as_id()}else{drive_comfort_id}
 
 drive_update(drive_comfort_id,comfort_fp)
