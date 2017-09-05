@@ -14,6 +14,7 @@ library(googledrive)     # devtools::install_github('tidyverse/googledrive')
 library(mapedit)         # devtools::install_github("r-spatial/mapedit")
 library(mapview)         # devtools::install_github("r-spatial/mapview@develop")
 library(leaflet.extras)  # devtools::install_github("bhaskarvk/leaflet.extras")
+library(knitr)
 
 options(httr_oob_default=TRUE) 
 gs_auth(new_user = TRUE) 
@@ -75,11 +76,68 @@ questions_data <-
 
 # make survey data long
 
-d <- discussion_data
+d <- discussion_data %>% arrange(QUESTION_ID)
 
-q <- questions_data %>% select(QUESTION_ID, QUESTION_TEXT_SHORT,TOPIC)
+q <- 
+  questions_data %>% 
+  select(QUESTION_ID, QUESTION_TEXT,QUESTION_TEXT_SHORT,TOPIC) %>% 
+  mutate(QUESTION_TEXT = if_else(is.na(QUESTION_TEXT_SHORT),QUESTION_TEXT,QUESTION_TEXT_SHORT))
 
 s <- 
   survey_data %>% 
-  gather(QUESTION_ID, RESPONSE, Q16:Q15) %>% 
-  left_join(q, by = "QUESTION_ID")
+  gather(QUESTION_ID, RESPONSE, matches("^Q[[:digit:]]{2}$")) %>% # spead all question columns ("Q##")
+  left_join(q, by = "QUESTION_ID") %>% 
+  arrange(QUESTION_ID)
+
+# check out the datasets
+
+list(d,s) %>% walk(glimpse)
+
+# bind the two tibbles and export
+
+comb <- bind_rows(d,s)
+
+drive
+
+drive_upload(file = ,
+             path = )
+
+# Get summaries ----
+
+# Home issues
+
+issues_fp <- "./1-data/4-ready/east-hill-issues.csv" # where the data will be save locally
+issues_name <- "home-issues" # the name of the file in Google Drive
+
+
+comb %>% 
+  filter(QUESTION_ID %in% paste0("Q",str_pad(1:15,2,pad = "0"))) %>%  
+  group_by(QUESTION_ID) %>% 
+  summarise(QUESTION_TEXT = first(QUESTION_TEXT),
+            N_TRUE = sum(as.logical(RESPONSE)),
+            N_EAST = sum(if_else(as.logical(RESPONSE) & FORUM %in% "East Hill",TRUE,FALSE)),   
+            N_VALLEY = sum(if_else(as.logical(RESPONSE) & FORUM %in% "Valley",TRUE,FALSE)),
+            N_WEST = sum(if_else(as.logical(RESPONSE) & FORUM %in% "West Hill",TRUE,FALSE))) %>% 
+  arrange(desc(N_TRUE)) %>% 
+  write_csv(issues_fp)
+  
+drive_issue_id <- if(!exists('drive_issue_id')){drive_find(pattern = issues_name) %>% as_id()}
+
+drive_update(drive_issues,issues_fp)
+
+
+
+
+# Q17 (Comfortable with home inspection)
+
+comb %>% 
+  filter(QUESTION_ID %in% "Q17") %>% 
+  select(QUESTION_ID,RESPONSE) %>% 
+  mutate(RESPONSE_LGL = case_when(RESPONSE %in% "Agree" ~ TRUE,
+                                  RESPONSE %in% "Disagree" ~ FALSE,
+                                  TRUE ~ NA)) %>% 
+  summarise(N = n(),
+            N_TRUE = sum(RESPONSE_LGL, na.rm = TRUE),
+            N_FALSE = sum(!RESPONSE_LGL, na.rm = TRUE),
+            PCT_TRUE = scales::percent(mean(RESPONSE_LGL,na.rm = TRUE))) %>% 
+  kable()
