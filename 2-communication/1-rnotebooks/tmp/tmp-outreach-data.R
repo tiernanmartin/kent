@@ -2,6 +2,7 @@
 
 library(magrittr)
 library(tidyverse)
+library(scales)
 library(sf)
 library(RSocrata)
 library(leaflet)
@@ -15,6 +16,7 @@ library(mapedit)         # devtools::install_github("r-spatial/mapedit")
 library(mapview)         # devtools::install_github("r-spatial/mapview@develop")
 library(leaflet.extras)  # devtools::install_github("bhaskarvk/leaflet.extras")
 library(knitr)
+library(miscgis)         # devtools::install_github("tiernanmartin/miscgis")
 
 options(httr_oob_default=TRUE) 
 gs_auth(new_user = TRUE) 
@@ -97,10 +99,7 @@ list(d,s) %>% walk(glimpse)
 
 comb <- bind_rows(d,s)
 
-drive
 
-drive_upload(file = ,
-             path = )
 
 # Get summaries ----
 
@@ -121,23 +120,33 @@ comb %>%
   arrange(desc(N_TRUE)) %>% 
   write_csv(issues_fp)
   
-drive_issue_id <- if(!exists('drive_issue_id')){drive_find(pattern = issues_name) %>% as_id()}
+drive_issue_id <- if(!exists('drive_issue_id')){drive_find(pattern = issues_name) %>% as_id()}else{drive_issue_id} # create drive id 
+# drive_issue_id <- drive_find(pattern = issues_name) %>% as_id()
 
-drive_update(drive_issues,issues_fp)
-
+drive_update(drive_issue_id,issues_fp)
 
 
 
 # Q17 (Comfortable with home inspection)
 
+comfort_fp <- "./1-data/4-ready/comfort-levels.csv" # where the data will be save locally
+comfort_name <- "comfort-levels" # the name of the file in Google Drive
+
 comb %>% 
   filter(QUESTION_ID %in% "Q17") %>% 
-  select(QUESTION_ID,RESPONSE) %>% 
-  mutate(RESPONSE_LGL = case_when(RESPONSE %in% "Agree" ~ TRUE,
-                                  RESPONSE %in% "Disagree" ~ FALSE,
-                                  TRUE ~ NA)) %>% 
-  summarise(N = n(),
-            N_TRUE = sum(RESPONSE_LGL, na.rm = TRUE),
-            N_FALSE = sum(!RESPONSE_LGL, na.rm = TRUE),
-            PCT_TRUE = scales::percent(mean(RESPONSE_LGL,na.rm = TRUE))) %>% 
-  kable()
+  select(QUESTION_ID,FORUM,RESPONSE) %>% 
+  drop_na() %>% 
+  count(FORUM,RESPONSE) %>% 
+  mutate(FCT = factor(RESPONSE)) %>% 
+  complete(FORUM,FCT,fill = list(n = 0)) %>% # no respondents checked "Neutral" in East Hill, but it should be added as an option in the summary
+  transmute(FORUM,
+            RESPONSE = as.character(FCT),
+            N = n) %>% 
+  group_by(FORUM) %>% 
+  mutate(PCT = percent(smart_round(N/sum(N),2))) %>% 
+  select_all(toupper) %>% 
+  write_csv(comfort_fp)
+
+drive_comfort_id <- if(!exists('drive_comfort_id')){drive_find(pattern = comfort_name) %>% as_id()}else{drive_comfort_id}
+
+drive_update(drive_comfort_id,comfort_fp)
