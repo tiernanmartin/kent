@@ -2,20 +2,12 @@
 
 library(magrittr)
 library(tidyverse)
-library(scales)
-library(sf)
-library(RSocrata)
-library(leaflet)
 library(stringr)
 library(lubridate)
 library(anytime)
 library(forcats)
 library(googlesheets)    # devtools::install_github('jennybc/googlesheets')
 library(googledrive)     # devtools::install_github('tidyverse/googledrive')
-library(mapedit)         # devtools::install_github("r-spatial/mapedit")
-library(mapview)         # devtools::install_github("r-spatial/mapview@develop")
-library(leaflet.extras)  # devtools::install_github("bhaskarvk/leaflet.extras")
-library(knitr)
 library(miscgis)         # devtools::install_github("tiernanmartin/miscgis")
 
 options(httr_oob_default=TRUE) 
@@ -49,7 +41,7 @@ col_types_list_qs <-
 
 discussion_data <- 
   data_sheet %>% 
-  gs_read(ws = "Discussion Data", 
+  gs_read(ws = "CC - Discussion Data", 
           range = cell_limits(c(2, 2), c(NA, 11)), 
           colnames = TRUE, 
           na = c("","#N/A"),
@@ -87,9 +79,9 @@ q <-
 
 s <- 
   survey_data %>% 
-  gather(QUESTION_ID, RESPONSE, matches("^Q[[:digit:]]{2}$")) %>% # spead all question columns ("Q##")
+  gather(QUESTION_ID, RESPONSE, matches("^Q[[:digit:]]{2}$")) %>% # spread all question columns ("Q##")
   left_join(q, by = "QUESTION_ID") %>% 
-  arrange(QUESTION_ID)
+  arrange(DOC_ID)
 
 # check out the datasets
 
@@ -97,8 +89,13 @@ list(d,s) %>% walk(glimpse)
 
 # bind the two tibbles and export
 
-comb <- bind_rows(d,s)
+comb <- 
+  bind_rows(d,s) %>% 
+  arrange(FORUM, METHOD, DOC_ID, QUESTION_ID)
 
+# save a copy of the data and upload it to Drive
+
+fp <- "./1-data/4-ready/outreach-data.csv"
 
 
 # Get summaries ----
