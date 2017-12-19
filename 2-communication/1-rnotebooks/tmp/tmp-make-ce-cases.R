@@ -153,17 +153,9 @@ c_bldg_sf <- filter(c_sf, PROBLEM %in% cat_list)
 
 c_2926 <- st_transform(c_sf, 2926)
 
-# c_2926 <- c_sf %>% slice(1:10) %>% st_transform(2926)   # just a workaround until my query quota refills
-
 # spatial overlay
 
-st_intersects(c_2926[1,], zng_subd) # WARNING: might take a while to run
-
-st_join(c_2926[1,], zng_subd)
-
-tic()
 c_zng <- st_join(c_2926, zng_subd)
-toc()
 
 # EDA ----
 
