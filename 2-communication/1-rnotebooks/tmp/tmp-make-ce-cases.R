@@ -90,6 +90,31 @@ zng_load <- zng_fp %>%
                  read_sf(zng_fp, layer = "zoning_kc_consol_20", stringsAsFactors = FALSE)
                })
 
+# King County Parcels
+
+p_fp <- root_file("1-data/2-external/EXTR_Parcel_20171013.csv")
+
+p_load <- p_fp %>% 
+  make_or_read({
+    
+    dr_id <- as_id("0B5Pp4V6eCkhraF9jOTl3bURiMkU") 
+    
+    zip_dir <- root_file("1-data/2-external")
+    
+    target_name <- "EXTR_Parcel_20171013.csv"
+    
+    drive_read_zip(dr_id = dr_id,
+                   .tempdir = FALSE,
+                   dir_path = zip_dir,
+                   read_fun = read_csv,
+                   target_name = target_name)
+    
+    
+  },
+               {
+                 read_csv(p_fp)
+               })
+
 # GEOCODE DATA ----
 
 geocode_fun <- function(address){
