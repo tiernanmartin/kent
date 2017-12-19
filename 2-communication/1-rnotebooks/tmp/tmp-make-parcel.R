@@ -15,8 +15,7 @@ library(knitr)
 library(miscgis)         # devtools::install_github("tiernanmartin/miscgis")
 library(snakecase)
 library(placement)       # devtools::install_github("DerekYves/placement")
-library(rprojroot)
-library(esri2sf)
+library(rprojroot) 
 library(zip)
 
 root <- rprojroot::is_rstudio_project
