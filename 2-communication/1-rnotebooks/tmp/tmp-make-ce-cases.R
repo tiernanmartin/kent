@@ -157,8 +157,13 @@ c_2926 <- st_transform(c_sf, 2926)
 
 # spatial overlay
 
-st_intersects(c_2926, zng_subd) # WARNING: might take a while to run
+st_intersects(c_2926[1,], zng_subd) # WARNING: might take a while to run
 
+st_join(c_2926[1,], zng_subd)
+
+tic()
+c_zng <- st_join(c_2926, zng_subd)
+toc()
 
 # EDA ----
 
