@@ -24,20 +24,25 @@ htmltools::tagList(rmarkdown::html_dependency_font_awesome())
 # LOAD DATA ----
 
 # Kent boundary
+# see root_file("2-communication/1-rnotebooks/tmp/tmp-make-kent-boundary.R")
 
-# data source: https://hub.arcgis.com/datasets/3fdb7c41de8548c5ab5f96cb1ef303e2_446
-cities <- st_read("https://opendata.arcgis.com/datasets/3fdb7c41de8548c5ab5f96cb1ef303e2_446.geojson")
+kent_bound_fp <- root_file("1-data/3-interim/kent-boundary.gpkg")
 
-kent_bound_sf <- cities %>% 
-  filter(CITYNAME %in% "Kent") %>% 
-  arrange(desc(SHAPE_Area)) %>% 
-  slice(1)
-
-kent_cntr <- kent_bound_sf %>% 
-  st_centroid() %>% 
-  mutate(LNG = map_dbl(geometry,1),
-         LAT = map_dbl(geometry,2)) %>% 
-  st_drop_geometry()
+kent_bound <- kent_bound_fp %>% 
+  make_or_read({
+    
+    dr_id <- as_id("1C4b7TKmrKzWxj53ajJkvb-ddS2bE9NZ0")
+    
+    drive_read(dr_id = dr_id,
+               .tempfile = FALSE,
+               path = kent_bound_fp,
+               read_fun = read_sf, 
+               stringsAsFactors = FALSE)
+    
+  },
+  {
+    read_sf(kent_bound_fp)
+  })
 
 # Code enforcement cases
 
