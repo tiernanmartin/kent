@@ -95,7 +95,7 @@ zng_load <- zng_fp %>%
 geocode_fun <- function(address){
   geocode_url(address, 
               auth="standard_api", 
-              privkey="AIzaSyBIPZUTQtrvCxLYEpXcgcOF5xXRawzXKRE",
+              privkey="AIzaSyCcDHXFWGdwZrijiKuRNTvS7DWLuZP5dAA",
               clean=TRUE, 
               add_date='today', 
               verbose=TRUE) %>% 
@@ -121,6 +121,18 @@ c_sf <- c_trim %>%
   st_as_sf %>% 
   st_set_crs(4326)
   
+c_fp <- root_file("./1-data/3-interim/code-enforcement-cases-2017.gpkg")
+
+drive_folder_id <- as_id("0B5Pp4V6eCkhrRFRYbWpoM3pWYkU")
+
+st_write(obj = c_sf,dsn = c_fp, layer = 'code_enforcement_cases_2017', driver = 'GPKG', layer_options = 'OVERWRITE=TRUE')
+
+# drive_upload(media = c_fp, path = drive_folder_id)
+
+drive_update(file = as_id("1MnVFK7kXlqduUwtBuH9gi3ztm9h22P4n"), c_fp)
+
+
+
 # SPATIAL OVERLAY ----
 
 # prep zoning
