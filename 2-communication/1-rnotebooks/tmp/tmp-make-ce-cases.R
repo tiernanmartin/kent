@@ -3,6 +3,7 @@
 library(magrittr)
 library(scales)
 library(tidyverse)
+library(lwgeom)
 library(sf)
 library(RSocrata)
 library(leaflet)
@@ -61,6 +62,8 @@ cases <- data_sheet %>%
           col_types = col_types) %>% 
   set_colnames(str_replace_all(colnames(.),"\\s","_")) 
 
+
+
 # King County Consolidated Zoning
 
 zng_fp <- root_file("1-data/2-external/zoning_kc_consol_20")
@@ -86,11 +89,6 @@ zng_load <- zng_fp %>%
                {
                  read_sf(zng_fp, layer = "zoning_kc_consol_20", stringsAsFactors = FALSE)
                })
-
-zng <- zng_load %>% 
-  st_transform(2926)
-
-
 
 # GEOCODE DATA ----
 
@@ -123,20 +121,40 @@ c_sf <- c_trim %>%
   st_as_sf %>% 
   st_set_crs(4326)
   
-  
-# EDA ----
+# SPATIAL OVERLAY ----
 
-# Check the PROBLEM category levels
+# prep zoning
 
-c_trim %>% 
-  transmute(PROBLEM = factor(PROBLEM)) %>% 
-  count(PROBLEM, sort = TRUE) %>% 
-  print(n = Inf)
+zng <- zng_load %>% 
+  st_transform(2926)
+
+zng_subd <- zng %>% 
+  st_subdivide(max_vertices = 256) %>% 
+  st_collection_extract() %>% 
+  st_cast('MULTIPOLYGON')
+
+# prep cases (check the PROBLEM category levels) 
 
 cat_list <- c("RATS/BUGS", "BUILDING", "MOLD", "DANG BLDG", "ROOF LEAKS")
 
 c_bldg_sf <- filter(c_sf, PROBLEM %in% cat_list)
 
+c_2926 <- st_transform(c_sf, 2926)
+
+# c_2926 <- c_sf %>% slice(1:10) %>% st_transform(2926)   # just a workaround until my query quota refills
+
+# spatial overlay
+
+st_intersects(c_2926, zng_subd) # WARNING: might take a while to run
+
+
+# EDA ----
+
+c_sf %>% 
+  st_drop_geometry() %>% 
+  transmute(PROBLEM = factor(PROBLEM)) %>% 
+  count(PROBLEM, sort = TRUE) %>% 
+  print(n = Inf)
 
 
 # MAP DATA ----
