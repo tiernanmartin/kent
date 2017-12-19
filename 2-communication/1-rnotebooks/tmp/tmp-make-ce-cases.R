@@ -1,20 +1,15 @@
 # SETUP ----
 
 library(magrittr)
-library(tidyverse)
 library(scales)
+library(tidyverse)
 library(sf)
 library(RSocrata)
 library(leaflet)
-library(stringr)
-library(lubridate)
-library(anytime)
-library(forcats)
+library(lubridate) 
 library(googlesheets)    # devtools::install_github('jennybc/googlesheets')
-library(googledrive)     # devtools::install_github('tidyverse/googledrive')
-library(mapedit)         # devtools::install_github("r-spatial/mapedit")
+library(googledrive)     # devtools::install_github('tidyverse/googledrive') 
 library(mapview)         # devtools::install_github("r-spatial/mapview@develop")
-library(leaflet.extras)  # devtools::install_github("bhaskarvk/leaflet.extras")
 library(knitr)
 library(miscgis)         # devtools::install_github("tiernanmartin/miscgis")
 library(snakecase)
@@ -82,15 +77,19 @@ zng_load <- zng_fp %>%
                  drive_read_zip(dr_id = dr_id,
                                 .tempdir = FALSE,
                                 dir_path = zip_dir,
-                                read_fun = st_read,
+                                read_fun = read_sf,
                                 target_name = target_name,
                                 layer = "zoning_kc_consol_20", 
                                 stringsAsFactors = FALSE)
                  
                },
                {
-                 st_read(zng_fp, layer = "zoning_kc_consol_20", stringsAsFactors = FALSE)
+                 read_sf(zng_fp, layer = "zoning_kc_consol_20", stringsAsFactors = FALSE)
                })
+
+zng <- zng_load %>% 
+  st_transform(2926)
+
 
 
 # GEOCODE DATA ----
