@@ -121,18 +121,6 @@ c_sf <- c_trim %>%
   st_as_sf %>% 
   st_set_crs(4326)
   
-c_fp <- root_file("./1-data/3-interim/code-enforcement-cases-2017.gpkg")
-
-drive_folder_id <- as_id("0B5Pp4V6eCkhrRFRYbWpoM3pWYkU")
-
-st_write(obj = c_sf,dsn = c_fp, layer = 'code_enforcement_cases_2017', driver = 'GPKG', layer_options = 'OVERWRITE=TRUE')
-
-# drive_upload(media = c_fp, path = drive_folder_id)
-
-drive_update(file = as_id("1MnVFK7kXlqduUwtBuH9gi3ztm9h22P4n"), c_fp)
-
-
-
 # SPATIAL OVERLAY ----
 
 # prep zoning
@@ -145,24 +133,39 @@ zng_subd <- zng %>%
   st_collection_extract() %>% 
   st_cast('MULTIPOLYGON')
 
+zng_list <- c("Single-Family Residential", 
+              "Multi-Family Residential",
+              "General Mixed Use",
+              "Mobile Home Park",
+              "Mixed Use Commercial/Residential")
+
+# spatial overlay
+
+c_2926 <- st_transform(c_sf, 2926)
+
+c_zng <- c_2926 %>% 
+  st_join(zng_subd) %>% 
+  select(RFS_NUM:LNG,CONSOL20)
+
+
 # prep cases (check the PROBLEM category levels) 
 
 cat_list <- c("RATS/BUGS", "BUILDING", "MOLD", "DANG BLDG", "ROOF LEAKS")
 
-c_bldg_sf <- filter(c_sf, PROBLEM %in% cat_list)
+c_bldg_sf <- c_zng %>% 
+  filter(PROBLEM %in% cat_list) %>% 
+  filter(CONSOL20 %in% zng_list)
 
-c_2926 <- st_transform(c_sf, 2926)
 
-# spatial overlay
 
-c_zng <- st_join(c_2926, zng_subd)
+
 
 # EDA ----
 
-c_sf %>% 
-  st_drop_geometry() %>% 
-  transmute(PROBLEM = factor(PROBLEM)) %>% 
-  count(PROBLEM, sort = TRUE) %>% 
+c_bldg_sf %>% 
+  transmute(PROBLEM = factor(PROBLEM),
+            ZONING = factor(CONSOL20)) %>% 
+  count(ZONING, PROBLEM,sort = TRUE) %>% 
   print(n = Inf)
 
 
@@ -172,7 +175,7 @@ orange <- "#e9673e"
 
 leaflet() %>% 
   addProviderTiles(provider = providers$CartoDB.PositronNoLabels) %>% 
-  addCircleMarkers(data = c_bldg_sf, 
+  addCircleMarkers(data = st_transform(c_bldg_sf,4326), 
                    color = orange,
                    weight = .5,
                    opacity = 1) %>% 
@@ -183,3 +186,12 @@ leaflet() %>%
   setView(kent_cntr$LNG,kent_cntr$LAT,  12)
 # SAVE & UPLOAD TO DRIVE ---- 
 
+c_fp <- root_file("./1-data/3-interim/code-enforcement-cases-2017.gpkg")
+
+drive_folder_id <- as_id("0B5Pp4V6eCkhrRFRYbWpoM3pWYkU")
+
+st_write(obj = c_zng,dsn = c_fp, layer = 'code_enforcement_cases_2017', driver = 'GPKG', layer_options = 'OVERWRITE=TRUE')
+
+# drive_upload(media = c_fp, path = drive_folder_id)
+
+drive_update(file = as_id("1MnVFK7kXlqduUwtBuH9gi3ztm9h22P4n"), c_fp)
