@@ -70,8 +70,8 @@ st_write(obj = kc_zng,
          driver = 'GPKG', 
          layer_options = 'OVERWRITE=TRUE')
 
-zip("kc-zoning.zip",kc_zng_gpkg_fp, recurse = FALSE)
+zip_pithy(kc_zng_zip_fp, kc_zng_gpkg_fp)
 
 drive_upload(media = kc_zng_zip_fp, path = drive_folder_id)
 
-drive_update(file = as_id("1XOQceh58joPHJszeCdvd3RPbZ34P2GJZ"), kc_zng_gpkg_fp)
+drive_update(file = as_id("1n8W_8ksv0ZTDXSxjVLHLsOmym1uGy2DD"), kc_zng_gpkg_fp)
