@@ -15,8 +15,7 @@ library(knitr)
 library(miscgis)         # devtools::install_github("tiernanmartin/miscgis")
 library(snakecase)
 library(placement)       # devtools::install_github("DerekYves/placement")
-library(rprojroot)
-library(zip) 
+library(rprojroot) 
 
 root <- rprojroot::is_rstudio_project
 root_file <- root$make_fix_file()
@@ -55,16 +54,23 @@ kc_zng <- rename_if(kc_zng_load, not_sfc, to_screaming_snake_case)
 
 # SAVE & UPLOAD TO DRIVE ---- 
 
+# Note: if working on a Windows system, first download the Rtools package:
+# "https://cran.r-project.org/bin/windows/Rtools/"
+
 kc_zng_gpkg_fp <- root_file("1-data/2-external/kc-zoning.gpkg")
 
 kc_zng_zip_fp <- root_file("1-data/2-external/kc-zoning.zip")
 
 drive_folder_id <- as_id("0B5Pp4V6eCkhrQ29lVGsxaS1ERXM") # ~/2-external/
 
-st_write(obj = kc_zng,dsn = kc_zng_gpkg_fp, layer = 'kc_zoning_consolidated', driver = 'GPKG', layer_options = 'OVERWRITE=TRUE')
+st_write(obj = kc_zng,
+         dsn = kc_zng_gpkg_fp, 
+         layer = 'kc_zoning_consolidated', 
+         driver = 'GPKG', 
+         layer_options = 'OVERWRITE=TRUE')
 
 zip(kc_zng_zip_fp,kc_zng_gpkg_fp)
 
 # drive_upload(media = kc_zng_zip_fp, path = drive_folder_id)
 
-drive_update(file = as_id("1EQIDABm4gYdksu45ftYD7X4lueHZfvRt"), kc_zng_gpkg_fp)
+drive_update(file = as_id("1XOQceh58joPHJszeCdvd3RPbZ34P2GJZ"), kc_zng_gpkg_fp)

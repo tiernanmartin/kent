@@ -16,7 +16,6 @@ library(miscgis)         # devtools::install_github("tiernanmartin/miscgis")
 library(snakecase)
 library(placement)       # devtools::install_github("DerekYves/placement")
 library(rprojroot) 
-library(zip)
 
 root <- rprojroot::is_rstudio_project
 root_file <- root$make_fix_file()
@@ -40,6 +39,8 @@ kent_p <- kc_p %>%
   filter(toupper(CTYNAME) %in% 'KENT')
 
 # SAVE & UPLOAD TO DRIVE: King County Parcels ---- 
+# Note: if working on a Windows system, first download the Rtools package:
+# "https://cran.r-project.org/bin/windows/Rtools/"
 
 kc_p_fp <- root_file("1-data/2-external/kc-parcels.gpkg")
 
