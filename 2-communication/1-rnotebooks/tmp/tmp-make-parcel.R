@@ -50,20 +50,24 @@ drive_folder_id <- as_id("0B5Pp4V6eCkhrQ29lVGsxaS1ERXM") # ~/2-external/
 
 st_write(obj = kc_p,dsn = kc_p_fp, layer = 'kc_parcels', driver = 'GPKG', layer_options = 'OVERWRITE=TRUE')
 
-zip(kc_p_zip_fp, kc_p_fp)
+zip_pithy(kc_p_zip_fp, kc_p_fp)
 
 # drive_upload(media = kc_p_zip_fp, path = drive_folder_id)
 
-drive_update(file = as_id("1sKZ6sJWL4PnfNxsLn-jOacauoR20uIKQ"), kc_p_fp)
+drive_update(file = as_id("1L4WkfQxgr637jSJTIGE2j9ZHHEYrnAF7"), kc_p_fp)
 
 # SAVE & UPLOAD TO DRIVE: King County Parcels ---- 
 
 kent_p_fp <- root_file("1-data/3-interim/kent-parcels.gpkg")
 
+kent_p_zip_fp <- root_file("1-data/3-interim/kent-parcels.zip")
+
 drive_folder_id <- as_id("0B5Pp4V6eCkhrRFRYbWpoM3pWYkU") # ~/3-interim/
 
 st_write(obj = kent_p,dsn = kent_p_fp, layer = 'kent_parcels', driver = 'GPKG', layer_options = 'OVERWRITE=TRUE')
 
-# drive_upload(media = kent_p_fp, path = drive_folder_id)
+zip_pithy(kent_p_zip_fp, kent_p_fp)
 
-drive_update(file = as_id("1yWf_6ibAR6Ea5076LPaZOURkOFJlhqEA"), kent_p_fp)
+# drive_upload(media = kent_p_zip_fp, path = drive_folder_id)
+
+drive_update(file = as_id("1d13l2qrWTVLzAPmqFztxIok6GS_AgJnu"), kent_p_fp)
