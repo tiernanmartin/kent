@@ -21,7 +21,33 @@ root <- rprojroot::is_rstudio_project
 root_file <- root$make_fix_file()
 options(httr_oob_default=TRUE) 
 htmltools::tagList(rmarkdown::html_dependency_font_awesome())
-# LOAD DATA ----
+
+# LOAD DATA: Code Enforcement Cases ----
+
+# Code enforcement cases
+
+cases_url <- "https://docs.google.com/spreadsheets/d/1xmpKg63VrDfZzaYJbqiK3-0FQhQIp9Ur586fuMBjEv0/edit?usp=sharing"
+
+data_sheet <- gs_url(cases_url, lookup = NULL, visibility = NULL, verbose = TRUE)
+
+col_types <- list(col_character(),
+                  col_character(),
+                  col_date(format = "%m/%d/%Y"),
+                  col_character(),
+                  col_character(),
+                  col_character(),
+                  col_character(),
+                  col_date(format = "%m/%d/%Y")
+)
+
+cases <- data_sheet %>% 
+  gs_read(range = cell_limits(c(1, 1), c(NA, 8)), 
+          colnames = TRUE, 
+          na = c("","#N/A"),
+          col_types = col_types) %>% 
+  set_colnames(str_replace_all(colnames(.),"\\s","_")) 
+
+# LOAD DATA: Others ----
 
 # Kent boundary
 # see root_file("2-communication/1-rnotebooks/tmp/tmp-make-kent-boundary.R")
@@ -44,39 +70,15 @@ kent_bound <- kent_bound_fp %>%
     read_sf(kent_bound_fp)
   })
 
-# Code enforcement cases
-
-url <- "https://docs.google.com/spreadsheets/d/1xmpKg63VrDfZzaYJbqiK3-0FQhQIp9Ur586fuMBjEv0/edit?usp=sharing"
-
-data_sheet <- gs_url(url, lookup = NULL, visibility = NULL, verbose = TRUE)
-
-col_types <- list(col_character(),
-                  col_character(),
-                  col_date(format = "%m/%d/%Y"),
-                  col_character(),
-                  col_character(),
-                  col_character(),
-                  col_character(),
-                  col_date(format = "%m/%d/%Y")
-                  )
-
-cases <- data_sheet %>% 
-  gs_read(range = cell_limits(c(1, 1), c(NA, 8)), 
-          colnames = TRUE, 
-          na = c("","#N/A"),
-          col_types = col_types) %>% 
-  set_colnames(str_replace_all(colnames(.),"\\s","_")) 
-
-
-
 # King County Consolidated Zoning
+# See root_file("2-communication/1-rnotebooks/tmp/tmp-make-kc-zoning.R")
 
-zng_fp <- root_file("1-data/2-external/zoning_kc_consol_20")
+zng_fp <- root_file("1-data/2-external/kc-zoning.gpkg")
 
 zng_load <- zng_fp %>% 
   make_or_read({
                  
-                 dr_id <- as_id("0B5Pp4V6eCkhrOTUwT29WQl9STVk")
+                 dr_id <- as_id("")
                  
                  zip_dir <- root_file("1-data/2-external")
                  
