@@ -24,32 +24,28 @@ htmltools::tagList(rmarkdown::html_dependency_font_awesome())
 
 # LOAD DATA: Code Enforcement Cases ----
 
-# Code enforcement cases
+# see root_file("2-communication/1-rnotebooks/tmp/tmp-geocode-ce-cases.R")
 
-cases_url <- "https://docs.google.com/spreadsheets/d/1xmpKg63VrDfZzaYJbqiK3-0FQhQIp9Ur586fuMBjEv0/edit?usp=sharing"
+c_fp <- root_file("1-data/3-interim/code-enforcement-cases-2017.gpkg")
 
-data_sheet <- gs_url(cases_url, lookup = NULL, visibility = NULL, verbose = TRUE)
+c_load <- c_fp %>% 
+  make_or_read({
+    dr_id <- as_id("")
+    
+    drive_read(dr_id = dr_id,
+               .tempfile = FALSE,
+               path = c_fp,
+               read_fun = read_sf, 
+               stringsAsFactors = FALSE)
+  },
+               {
+                 read_sf(c_fp, stringsAsFactors = FALSE)
+               })
+c_sf <- c_load %>% 
+  select(RFS_NUM:LNG,STATUS,ERROR_MESSAGE)
 
-col_types <- list(col_character(),
-                  col_character(),
-                  col_date(format = "%m/%d/%Y"),
-                  col_character(),
-                  col_character(),
-                  col_character(),
-                  col_character(),
-                  col_date(format = "%m/%d/%Y")
-)
+# LOAD DATA: Kent boundary ----
 
-cases <- data_sheet %>% 
-  gs_read(range = cell_limits(c(1, 1), c(NA, 8)), 
-          colnames = TRUE, 
-          na = c("","#N/A"),
-          col_types = col_types) %>% 
-  set_colnames(str_replace_all(colnames(.),"\\s","_")) 
-
-# LOAD DATA: Others ----
-
-# Kent boundary
 # see root_file("2-communication/1-rnotebooks/tmp/tmp-make-kent-boundary.R")
 
 kent_bound_fp <- root_file("1-data/3-interim/kent-boundary.gpkg")
@@ -70,88 +66,61 @@ kent_bound <- kent_bound_fp %>%
     read_sf(kent_bound_fp)
   })
 
-# King County Consolidated Zoning
+# LOAD DATA: King County Consolidated Zoning ----
+
 # See root_file("2-communication/1-rnotebooks/tmp/tmp-make-kc-zoning.R")
 
-zng_fp <- root_file("1-data/2-external/kc-zoning.gpkg")
+zng_fp <- root_file("1-data/3-interim/kc-zoning.gpkg")
 
 zng_load <- zng_fp %>% 
   make_or_read({
                  
-                 dr_id <- as_id("")
+                 dr_id <- as_id("1n8W_8ksv0ZTDXSxjVLHLsOmym1uGy2DD")
                  
-                 zip_dir <- root_file("1-data/2-external")
+                 zip_dir <- root_file("1-data/3-interim")
                  
-                 target_name <- "zoning_kc_consol_20"
+                 target_name <- "kc-zoning.gpkg"
                  
                  drive_read_zip(dr_id = dr_id,
                                 .tempdir = FALSE,
                                 dir_path = zip_dir,
                                 read_fun = read_sf,
-                                target_name = target_name,
-                                layer = "zoning_kc_consol_20", 
+                                target_name = target_name, 
                                 stringsAsFactors = FALSE)
                  
                },
                {
-                 read_sf(zng_fp, layer = "zoning_kc_consol_20", stringsAsFactors = FALSE)
+                 read_sf(zng_fp, stringsAsFactors = FALSE)
                })
 
-# King County Parcels
 
-p_fp <- root_file("1-data/2-external/EXTR_Parcel_20171013.csv")
+# LOAD DATA: King County Parcels ----
+
+# See root_file("2-communication/1-rnotebooks/tmp/tmp-make-kc-parcel.R") 
+
+p_fp <- root_file("1-data/2-external/kc-parcels.gpkg")
 
 p_load <- p_fp %>% 
   make_or_read({
     
-    dr_id <- as_id("0B5Pp4V6eCkhraF9jOTl3bURiMkU") 
+    dr_id <- as_id("1L4WkfQxgr637jSJTIGE2j9ZHHEYrnAF7") 
     
     zip_dir <- root_file("1-data/2-external")
     
-    target_name <- "EXTR_Parcel_20171013.csv"
+    target_name <- "kc-parcels.gpkg"
     
     drive_read_zip(dr_id = dr_id,
                    .tempdir = FALSE,
                    dir_path = zip_dir,
-                   read_fun = read_csv,
-                   target_name = target_name)
+                   read_fun = read_sf,
+                   target_name = target_name,
+                   stringsAsFactors = FALSE)
     
     
   },
                {
-                 read_csv(p_fp)
+                 read_sf(p_fp, stringsAsFactors = FALSE)
                })
-
-# GEOCODE DATA ----
-
-geocode_fun <- function(address){
-  geocode_url(address, 
-              auth="standard_api", 
-              privkey="AIzaSyCcDHXFWGdwZrijiKuRNTvS7DWLuZP5dAA",
-              clean=TRUE, 
-              add_date='today', 
-              verbose=TRUE) %>% 
-    as_tibble
-}
-
-# slow operation
-
-c <- cases %>% 
-  mutate(ADDR = if_else(is.na(RFS_ADDRESS),OTHER_LOCATION,RFS_ADDRESS),
-         ADDR = str_c(ADDR, "Kent", "WA", sep = ", "),
-         ADDR_TBL = map(ADDR,geocode_fun))
-
-c_trim <- c %>% 
-  unnest %>% 
-  rename_all(to_screaming_snake_case) %>% 
-  filter(LOCATION_TYPE %!in% 'APPROXIMATE') %>% 
-  filter(STATUS %!in% "ZERO_RESULTS")
-
-c_sf <- c_trim %>% 
-  mutate(geometry = map2(LNG, LAT, ~st_point(c(.x,.y))),
-         geometry = st_sfc(geometry)) %>% 
-  st_as_sf %>% 
-  st_set_crs(4326)
   
 # SPATIAL OVERLAY ----
 
@@ -189,9 +158,6 @@ c_bldg_sf <- c_zng %>%
   filter(CONSOL20 %in% zng_list)
 
 
-
-
-
 # EDA ----
 
 c_bldg_sf %>% 
@@ -218,12 +184,4 @@ leaflet() %>%
   setView(kent_cntr$LNG,kent_cntr$LAT,  12)
 # SAVE & UPLOAD TO DRIVE ---- 
 
-c_fp <- root_file("./1-data/3-interim/code-enforcement-cases-2017.gpkg")
-
-drive_folder_id <- as_id("0B5Pp4V6eCkhrRFRYbWpoM3pWYkU")
-
-st_write(obj = c_zng,dsn = c_fp, layer = 'code_enforcement_cases_2017', driver = 'GPKG', layer_options = 'OVERWRITE=TRUE')
-
-# drive_upload(media = c_fp, path = drive_folder_id)
-
-drive_update(file = as_id("1MnVFK7kXlqduUwtBuH9gi3ztm9h22P4n"), c_fp)
+# add save code here
