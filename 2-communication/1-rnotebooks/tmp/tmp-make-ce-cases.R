@@ -121,7 +121,30 @@ p_load <- p_fp %>%
                {
                  read_sf(p_fp, stringsAsFactors = FALSE)
                })
-  
+
+# LOAD DATA: Kent Parcels ----
+
+p_kent_fp <- root_file("1-data/3-interim/kent-parcels.gpkg")
+
+p_kent_load <- p_kent_fp %>% 
+  make_or_read({
+    dr_id <- as_id("1d13l2qrWTVLzAPmqFztxIok6GS_AgJnu")
+    
+    zip_dir <- root_file("1-data/3-interim")
+    
+    target_name <- "kent-parcels.gpkg"
+    
+    drive_read_zip(dr_id = dr_id,
+                   .tempdir = FALSE,
+                   dir_path = zip_dir,
+                   read_fun = read_sf,
+                   target_name = target_name,
+                   stringsAsFactors = FALSE)
+  },
+               {
+                 read_sf(p_kent_fp, stringsAsFactors = FALSE)
+               })
+
 # SPATIAL OVERLAY ----
 
 # prep zoning
