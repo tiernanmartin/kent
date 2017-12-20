@@ -16,6 +16,7 @@ library(miscgis)         # devtools::install_github("tiernanmartin/miscgis")
 library(snakecase)
 library(placement)       # devtools::install_github("DerekYves/placement")
 library(rprojroot) 
+library(zip)
 
 root <- rprojroot::is_rstudio_project
 root_file <- root$make_fix_file()
@@ -69,8 +70,8 @@ st_write(obj = kc_zng,
          driver = 'GPKG', 
          layer_options = 'OVERWRITE=TRUE')
 
-zip(kc_zng_zip_fp,kc_zng_gpkg_fp)
+zip("kc-zoning.zip",kc_zng_gpkg_fp, recurse = FALSE)
 
-# drive_upload(media = kc_zng_zip_fp, path = drive_folder_id)
+drive_upload(media = kc_zng_zip_fp, path = drive_folder_id)
 
 drive_update(file = as_id("1XOQceh58joPHJszeCdvd3RPbZ34P2GJZ"), kc_zng_gpkg_fp)
