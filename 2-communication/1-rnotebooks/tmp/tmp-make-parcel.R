@@ -23,6 +23,30 @@ options(httr_oob_default=TRUE)
 htmltools::tagList(rmarkdown::html_dependency_font_awesome())
 # CREATE DATA ----
 
+# King County Data Present Use
+
+lu_fp <- root_file("1-data/2-external/EXTR_LookUp.csv")
+
+lu_load <- lu_fp %>% 
+  make_or_read({
+    dr_id <- as_id("1-L42pHb7lySqonanSwBbXSH9OZrKHp2A")
+    
+    drive_read(dr_id = dr_id,
+               .tempfile = FALSE,
+               path = lu_fp,
+               read_fun = read_csv)
+  },
+               {
+                 read_csv(lu_fp)
+               })
+
+pu <- lu_load %>% 
+  rename_all(to_screaming_snake_case) %>% 
+  filter(LU_TYPE == 102) %>% 
+  select(PRESENTUSE = LU_ITEM,
+         PRESENTUSE_DESC = LU_DESCRIPTION)
+
+
 # King County Parcels
 
 kc_p_url <- "https://opendata.arcgis.com/datasets/c7a17b7ad3ec44b7ae64796dca691d72_1722.geojson"
@@ -31,7 +55,9 @@ kc_p_url <- "https://opendata.arcgis.com/datasets/c7a17b7ad3ec44b7ae64796dca691d
 kc_p_load <- read_sf(kc_p_url, stringsAsFactors = FALSE)
 ## 1230.39 sec elapsed
 
-kc_p <- rename_if(kc_p_load, not_sfc, to_screaming_snake_case)
+kc_p <- kc_p_load %>% 
+  rename_if(not_sfc, to_screaming_snake_case) %>% 
+  left_join(pu, by = "PRESENTUSE")
 
 # Kent Parcels
 
@@ -54,7 +80,7 @@ zip_pithy(kc_p_zip_fp, kc_p_fp)
 
 # drive_upload(media = kc_p_zip_fp, path = drive_folder_id)
 
-drive_update(file = as_id("1L4WkfQxgr637jSJTIGE2j9ZHHEYrnAF7"), kc_p_fp)
+drive_update(file = as_id("1ST6g5NAcY0yLSZi7S-FJf_Y2Ol2SviZ9"), kc_p_fp)
 
 # SAVE & UPLOAD TO DRIVE: King County Parcels ---- 
 
@@ -70,4 +96,4 @@ zip_pithy(kent_p_zip_fp, kent_p_fp)
 
 # drive_upload(media = kent_p_zip_fp, path = drive_folder_id)
 
-drive_update(file = as_id("1d13l2qrWTVLzAPmqFztxIok6GS_AgJnu"), kent_p_fp)
+drive_update(file = as_id("1XPxEl1JuPTuXPK6zhjIMhDyJjhROIGLJ"), kent_p_fp)
