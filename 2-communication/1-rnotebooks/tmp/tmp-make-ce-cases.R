@@ -66,6 +66,13 @@ kent_bound <- kent_bound_fp %>%
     read_sf(kent_bound_fp)
   })
 
+# LOAD DATA: Kent center----
+
+kent_cntr <- kent_bound %>% 
+  st_centroid() %>% 
+  mutate(LNG = map_dbl(geom,1),
+         LAT = map_dbl(geom,2))
+
 # LOAD DATA: King County Consolidated Zoning ----
 
 # See root_file("2-communication/1-rnotebooks/tmp/tmp-make-kc-zoning.R")
@@ -103,7 +110,7 @@ p_fp <- root_file("1-data/2-external/kc-parcels.gpkg")
 p_load <- p_fp %>% 
   make_or_read({
     
-    dr_id <- as_id("1L4WkfQxgr637jSJTIGE2j9ZHHEYrnAF7") 
+    dr_id <- as_id("1ST6g5NAcY0yLSZi7S-FJf_Y2Ol2SviZ9") 
     
     zip_dir <- root_file("1-data/2-external")
     
@@ -128,7 +135,7 @@ p_kent_fp <- root_file("1-data/3-interim/kent-parcels.gpkg")
 
 p_kent_load <- p_kent_fp %>% 
   make_or_read({
-    dr_id <- as_id("1d13l2qrWTVLzAPmqFztxIok6GS_AgJnu")
+    dr_id <- as_id("1XPxEl1JuPTuXPK6zhjIMhDyJjhROIGLJ")
     
     zip_dir <- root_file("1-data/3-interim")
     
@@ -149,44 +156,60 @@ p_kent_load <- p_kent_fp %>%
 
 # prep zoning
 
-zng <- zng_load %>% 
-  st_transform(2926)
-
-zng_subd <- zng %>% 
-  st_subdivide(max_vertices = 256) %>% 
-  st_collection_extract() %>% 
-  st_cast('MULTIPOLYGON')
-
-zng_list <- c("Single-Family Residential", 
-              "Multi-Family Residential",
-              "General Mixed Use",
-              "Mobile Home Park",
-              "Mixed Use Commercial/Residential")
+# zng <- zng_load %>% 
+#   st_transform(2926)
+# 
+# zng_subd <- zng %>% 
+#   st_subdivide(max_vertices = 256) %>% 
+#   st_collection_extract() %>% 
+#   st_cast('MULTIPOLYGON')
+# 
+# zng_list <- c("Single-Family Residential", 
+#               "Multi-Family Residential",
+#               "General Mixed Use",
+#               "Mobile Home Park",
+#               "Mixed Use Commercial/Residential")
 
 # spatial overlay
 
 c_2926 <- st_transform(c_sf, 2926)
 
-c_zng <- c_2926 %>% 
-  st_join(zng_subd) %>% 
-  select(RFS_NUM:LNG,CONSOL20)
+p_2926 <- st_transform(p_kent_load, 2926)
+
+c_p <- st_join(c_2926,p_2926)
 
 
 # prep cases (check the PROBLEM category levels) 
 
-cat_list <- c("RATS/BUGS", "BUILDING", "MOLD", "DANG BLDG", "ROOF LEAKS")
+pu_list <- c("Single Family(Res Use/Zone)",
+                     "Apartment",
+                     "Condominium(Residential)",
+                     "Duplex",
+                     "Single Family(C/I Zone)",
+                     "Mobile Home Park",
+                     "Mobile Home",
+                     "Apartment(Subsidized)"
+                     )
 
-c_bldg_sf <- c_zng %>% 
+cat_list <- c("RATS/BUGS", 
+              "BUILDING", 
+              "MOLD", 
+              "DANG BLDG", 
+              "ROOF LEAKS", 
+              "MISC")
+
+c_bldg_sf <- c_p %>% 
   filter(PROBLEM %in% cat_list) %>% 
-  filter(CONSOL20 %in% zng_list)
+  filter(PRESENTUSE_DESC %in% pu_list)
 
 
 # EDA ----
 
 c_bldg_sf %>% 
+  st_drop_geometry() %>% 
   transmute(PROBLEM = factor(PROBLEM),
-            ZONING = factor(CONSOL20)) %>% 
-  count(ZONING, PROBLEM,sort = TRUE) %>% 
+            PRESENTUSE_DESC = factor(PRESENTUSE_DESC)) %>% 
+  count(PRESENTUSE_DESC, PROBLEM,sort = TRUE) %>% 
   print(n = Inf)
 
 
@@ -200,7 +223,7 @@ leaflet() %>%
                    color = orange,
                    weight = .5,
                    opacity = 1) %>% 
-  addPolygons(data = kent_bound_sf,
+  addPolygons(data = kent_bound,
               color = "#434343",
               opacity = 1,
               fillOpacity = 0) %>% 
