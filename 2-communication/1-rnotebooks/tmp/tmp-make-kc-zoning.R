@@ -93,13 +93,14 @@ kc_zng_2926 <- kc_zng %>%
     C %in% mixed_list ~ "MIXED",
     TRUE ~ "OTHER"
   )) %>%
-  mutate(ZONING_CAT_3_FCT = factor(ZONING_CAT_3, ordered = TRUE)) %>% 
+  mutate(ZONING_CAT_3_FCT = factor(ZONING_CAT_3, 
+                                   levels = c("OTHER","MIXED","MF","SF"),
+                                   ordered = TRUE)) %>% 
   st_transform(2926)
 
 kent_bound_2926 <- st_transform(kent_bound, 2926)
 
-
-
+kent_zng <- st_intersection(kc_zng_2926,kent_bound_2926)
 
 # SAVE & UPLOAD TO DRIVE: King County Zoning ---- 
 
@@ -120,26 +121,22 @@ st_write(obj = kc_zng,
 
 zip_pithy(kc_zng_zip_fp, kc_zng_gpkg_fp)
 
-drive_upload(media = kc_zng_zip_fp, path = drive_folder_id)
+# drive_upload(media = kc_zng_zip_fp, path = drive_folder_id)
 
 drive_update(file = as_id("1n8W_8ksv0ZTDXSxjVLHLsOmym1uGy2DD"), kc_zng_gpkg_fp)
 
 # SAVE & UPLOAD TO DRIVE: King County Zoning in Kent ----  
 
-kc_zng_gpkg_fp <- root_file("1-data/2-external/kc-zoning.gpkg")
+kent_zng_gpkg_fp <- root_file("1-data/3-interim/kent-zoning.gpkg")
 
-kc_zng_zip_fp <- root_file("1-data/2-external/kc-zoning.zip")
+drive_folder_id <- as_id("0B5Pp4V6eCkhrRFRYbWpoM3pWYkU") # ~/3-interim/
 
-drive_folder_id <- as_id("0B5Pp4V6eCkhrQ29lVGsxaS1ERXM") # ~/2-external/
-
-st_write(obj = kc_zng,
-         dsn = kc_zng_gpkg_fp, 
-         layer = 'kc_zoning_consolidated', 
+st_write(obj = kent_zng,
+         dsn = kent_zng_gpkg_fp, 
+         layer = 'kent_zoning', 
          driver = 'GPKG', 
          layer_options = 'OVERWRITE=TRUE')
 
-zip_pithy(kc_zng_zip_fp, kc_zng_gpkg_fp)
+# drive_upload(media = kent_zng_gpkg_fp, path = drive_folder_id)
 
-drive_upload(media = kc_zng_zip_fp, path = drive_folder_id)
-
-drive_update(file = as_id("1n8W_8ksv0ZTDXSxjVLHLsOmym1uGy2DD"), kc_zng_gpkg_fp)
+drive_update(file = as_id("1oad_qjGFXPAltNzUp7aLu0_D42ade-sZ"), kc_zng_gpkg_fp)
