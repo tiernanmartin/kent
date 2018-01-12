@@ -152,11 +152,7 @@ c_14_17_trim <- c_14_17_geocode %>%
   filter(LOCATION_TYPE %!in% 'APPROXIMATE') %>% 
   filter(STATUS %!in% "ZERO_RESULTS")
 
-c_14_17_sf <- c_14_17_trim %>% 
-  mutate(geometry = map2(LNG, LAT, ~st_point(c(.x,.y))),
-         geometry = st_sfc(geometry)) %>% 
-  st_as_sf %>% 
-  st_set_crs(4326)
+c_14_17_sf <- st_as_sf(c_14_17_trim, coords = c("LNG", "LAT"), crs = 4326)
   
 # SAVE & UPLOAD TO DRIVE ---- 
 
