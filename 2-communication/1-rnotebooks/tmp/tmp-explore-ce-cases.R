@@ -121,8 +121,26 @@ p_kent_load <- p_kent_fp %>%
                })
 
 
+# SUBSET DATA: Multi-family only ----
+
+mf_uses <- c("4-Plex",
+        "Apartment",
+        "Apartment(Mixed Use)",
+        "Apartment(Subsidized)",
+        "Duplex",
+        "Townhouse Plat",
+        "Triplex",
+        "Vacant(Multi-family)")
+
+zng_mf <- filter(kent_zng, C %in% "Multi-Family Residential")
+
+c_mf <-filter(c, PRESENTUSE_DESC %in% mf_uses)
+
+kent_mf <-filter(p_kent_load, PRESENTUSE_DESC %in% mf_uses)
+
 # EDA ----
 
+# What the most common problem type (by Present Use category)
 c %>% 
   st_drop_geometry() %>% 
   transmute(PROBLEM = factor(PROBLEM),
@@ -130,6 +148,27 @@ c %>%
   count(PRESENTUSE_DESC, PROBLEM,sort = TRUE) %>% 
   print(n = Inf)
 
+# What's the most number of problems that can be cited on a given day?
+c %>% 
+  st_drop_geometry() %>% 
+  count(RFS_ADDRESS, DATE_RECEIVED, sort = TRUE)
+
+c %>% 
+  st_drop_geometry() %>% 
+  subset_duplicated("RFS_ADDRESS") %>% 
+  group_by(RFS_ADDRESS) %>% 
+  summarise(NUMBER_OF_UNIQUE_DATES = length(unique(DATE_RECEIVED))) %>% 
+  arrange(desc(NUMBER_OF_UNIQUE_DATES))
+
+# Make a subset of the multi-family, "repeat offenders"
+c_mf_ro <- c %>% 
+  st_drop_geometry() %>% 
+  subset_duplicated("RFS_ADDRESS") %>% 
+  group_by(RFS_ADDRESS) %>% 
+  summarise(NUMBER_OF_UNIQUE_DATES = length(unique(DATE_RECEIVED))) %>% 
+  right_join(c_mf, by = "RFS_ADDRESS") %>%    # note: joins to `c_mf`, NOT `C`
+  filter(!is.na(NUMBER_OF_UNIQUE_DATES)) %>% 
+  st_sf
 
 # MAP DATA ----
 
@@ -139,12 +178,13 @@ pal <- colorFactor(cols,domain = kent_zng$ZONING_CAT_3_FCT,ordered = TRUE)
 
 orange <- "#e9673e"
 
-leaflet() %>% 
+show_cases_with_zoning <- function(){
+  leaflet() %>% 
   addProviderTiles(provider = providers$CartoDB.PositronNoLabels) %>% 
   addPolygons(data = st_transform(kent_zng,4326),
               smoothFactor = 0,
               opacity = 0,
-              fillColor = ~pal(ZONING_CAT_3_FCT), fillOpacity = .33) %>% 
+              fillColor = ~pal(ZONING_CAT_3_FCT), fillOpacity = .33) %>%  
   addCircleMarkers(data = st_transform(c,4326), 
                    color = orange,
                    weight = .5,
@@ -154,6 +194,59 @@ leaflet() %>%
               opacity = 1,
               fillOpacity = 0) %>% 
   setView(kent_cntr$LNG,kent_cntr$LAT,  12)
+}
+
+# show_cases_with_zoning()
+
+show_mf_cases <- function(){
+  leaflet() %>% 
+  addProviderTiles(provider = providers$CartoDB.PositronNoLabels) %>% 
+  addPolygons(data = st_transform(zng_mf,4326),
+              smoothFactor = 0,
+              opacity = 0,
+              fillColor = cols[[2]], fillOpacity = .33) %>% 
+  addPolygons(data = st_transform(kent_mf, 4326),
+              smoothFactor = 0, 
+              opacity = 1, color = cols[[2]], weight = .25,
+              fillColor = cols[[2]],fillOpacity = .5) %>% 
+  # addCircleMarkers(data = st_transform(c_mf,4326),  
+  #                  opacity = 1, color = "#434343", weight = .5,
+  #                  fillOpacity = 0
+  #                  ) %>% 
+  addPolygons(data = kent_bound,
+              color = "#434343",
+              opacity = 1,
+              fillOpacity = 0) %>% 
+  setView(kent_cntr$LNG,kent_cntr$LAT,  12)
+}
+
+# show_mf_cases()
+
+show_mf_ro_cases <- function(){
+  leaflet() %>% 
+  addProviderTiles(provider = providers$CartoDB.PositronNoLabels) %>% 
+  addPolygons(data = st_transform(zng_mf,4326),
+              smoothFactor = 0,
+              opacity = 0,
+              fillColor = cols[[2]], fillOpacity = .33) %>% 
+  addPolygons(data = st_transform(kent_mf, 4326),
+              smoothFactor = 0, 
+              opacity = 1, color = cols[[2]], weight = .25,
+              fillColor = cols[[2]],fillOpacity = .5) %>% 
+  addCircleMarkers(data = st_transform(c_mf_ro,4326),
+                   opacity = 1, color = "#434343", weight = .5,
+                   fillOpacity = 0
+                   ) %>%
+  addPolygons(data = kent_bound,
+              color = "#434343",
+              opacity = 1,
+              fillOpacity = 0) %>% 
+  setView(kent_cntr$LNG,kent_cntr$LAT,  12)
+}
+
+# show_mf_ro_cases()
+
+
 # SAVE & UPLOAD TO DRIVE ---- 
 
 c_bldg_fp <- root_file("1-data/3-interim/ce-cases-resbldg-2014-2017.gpkg")
