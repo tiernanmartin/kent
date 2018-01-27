@@ -198,6 +198,26 @@ show_cases_with_zoning <- function(){
 
 # show_cases_with_zoning()
 
+show_mf_zoning <- function(){
+  leaflet() %>% 
+  addProviderTiles(provider = providers$CartoDB.PositronNoLabels) %>% 
+  addPolygons(data = st_transform(zng_mf,4326),
+              smoothFactor = 0,
+              opacity = 0,
+              fillColor = cols[[2]], fillOpacity = .33) %>% 
+  addPolygons(data = st_transform(kent_mf, 4326),
+              smoothFactor = 0, 
+              opacity = 1, color = cols[[2]], weight = .25,
+              fillColor = cols[[2]],fillOpacity = .5) %>%  
+  addPolygons(data = kent_bound,
+              color = "#434343",
+              opacity = 1,
+              fillOpacity = 0) %>% 
+  setView(kent_cntr$LNG,kent_cntr$LAT,  12)
+}
+
+# show_mf_zoning()
+
 show_mf_cases <- function(){
   leaflet() %>% 
   addProviderTiles(provider = providers$CartoDB.PositronNoLabels) %>% 
@@ -209,10 +229,10 @@ show_mf_cases <- function(){
               smoothFactor = 0, 
               opacity = 1, color = cols[[2]], weight = .25,
               fillColor = cols[[2]],fillOpacity = .5) %>% 
-  # addCircleMarkers(data = st_transform(c_mf,4326),  
-  #                  opacity = 1, color = "#434343", weight = .5,
-  #                  fillOpacity = 0
-  #                  ) %>% 
+  addCircleMarkers(data = st_transform(c_mf,4326),
+                   opacity = 1, color = "#434343", weight = .5,
+                   fillOpacity = 0
+                   ) %>%
   addPolygons(data = kent_bound,
               color = "#434343",
               opacity = 1,
