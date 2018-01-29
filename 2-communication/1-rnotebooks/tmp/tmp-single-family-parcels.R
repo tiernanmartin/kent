@@ -266,6 +266,19 @@ tmp_5 %>%
 tmp_5 %>% filter(FORMATTED_ADDR_FUZZY_MISMATCH_LGL) %>% nrow()
 # [1] 2756
 
+renter_hu_sf <- 2756
+
+renter_hu <- 19235
+
+renter_hu_moe <- 665
+
+str_c(
+  (renter_hu - renter_hu_sf)-renter_hu_moe, 
+  (renter_hu - renter_hu_sf)+renter_hu_moe,
+  sep = " - "
+)
+ 
+
 
 
 
