@@ -94,40 +94,56 @@ c_14_17 <- c_14_16 %>%
 
 # GEOCODE DATA ----
 
-geocode_fun <- function(id,address){
+geocode_fun <- function(id, address){
   
-  if(as.integer(id)<= 2498){
-    geocode_url(address, 
+  if(as.integer(id)<= 2500){
+    return(
+      geocode_url(address, 
                 auth="standard_api", 
-                privkey="AIzaSyC4rHONG5Ij9G_Kek2oaPFdJR0X3tr_x58",
+                privkey="AIzaSyCV7tvAz6Tq5PMYq9VErUXs4hv42NPWDRU",
                 clean=TRUE, 
                 add_date='today', 
                 verbose=TRUE) %>% 
       as_tibble
-  }
-  
-  if(between(as.integer(id),2499,5000)){
+      )
+  } else if(between(as.integer(id),2501,5000)){
+    return(
     geocode_url(address, 
-                auth="standard_api", 
-                privkey="AIzaSyD__aYbbwFQbfMzv6FDdCXHt52rG2GJdso",
+                auth="standard_api",  
+                privkey="AIzaSyAC19c3TtQwrSiQYKYDaf-9nDIqahirnD8", 
                 clean=TRUE, 
                 add_date='today', 
                 verbose=TRUE) %>% 
       as_tibble
+    )
+  } else if(between(as.integer(id),5001,7500)){
+    return(
+    geocode_url(address, 
+                auth="standard_api",  
+                privkey="AIzaSyCYhgjxQ0PRqo9VTHUrK1KnzaI65AGwZgs", 
+                clean=TRUE, 
+                add_date='today', 
+                verbose=TRUE) %>% 
+      as_tibble
+    )
+  } else if(between(as.integer(id),7501,10000)){
+    return(
+    geocode_url(address, 
+                auth="standard_api", 
+                privkey="AIzaSyDe7E03paIZRJopnUW8ZDOMPkaBxefP-7A",
+                clean=TRUE, 
+                add_date='today', 
+                verbose=TRUE) %>% 
+      as_tibble
+    )
   }
 }
 
 # slow operation
 
-# c_14_17_geocode <- c_14_17 %>% 
-#   rownames_to_column("ID") %>% 
-#   mutate(ADDR_TBL = map2(ID,ADDR,geocode_fun))
 
-c_14_17_geocode_1_2498 <- slice(c_14_17,1:2498)
-
-c_14_17_geocode_2499_2839 <- c_14_17 %>% 
+c_14_17_geocode <- c_14_17 %>%
   rownames_to_column("ID") %>%  
-  slice(2499:2839) %>% 
   mutate(ADDR_TBL = map2(ID,ADDR,geocode_fun))
   
 
@@ -137,20 +153,16 @@ c_14_17_trim <- c_14_17_geocode %>%
   filter(LOCATION_TYPE %!in% 'APPROXIMATE') %>% 
   filter(STATUS %!in% "ZERO_RESULTS")
 
-c_14_17_sf <- c_14_17_trim %>% 
-  mutate(geometry = map2(LNG, LAT, ~st_point(c(.x,.y))),
-         geometry = st_sfc(geometry)) %>% 
-  st_as_sf %>% 
-  st_set_crs(4326)
+c_14_17_sf <- st_as_sf(c_14_17_trim, coords = c("LNG", "LAT"), crs = 4326)
   
 # SAVE & UPLOAD TO DRIVE ---- 
 
-c_fp <- root_file("./1-data/3-interim/code-enforcement-cases-2017.gpkg")
+c_fp <- root_file("./1-data/3-interim/code-enforcement-cases-2014-2017.gpkg")
 
 drive_folder_id <- as_id("0B5Pp4V6eCkhrRFRYbWpoM3pWYkU") # ~/3-interim/
 
-st_write(obj = c_sf,dsn = c_fp, layer = 'code_enforcement_cases_2017', driver = 'GPKG', layer_options = 'OVERWRITE=TRUE')
+st_write(obj = c_14_17_sf,dsn = c_fp, layer = 'code_enforcement_cases_2004_2017', driver = 'GPKG', layer_options = 'OVERWRITE=TRUE')
 
-drive_upload(media = c_fp, path = drive_folder_id)
+# drive_upload(media = c_fp, path = drive_folder_id)
 
-drive_update(file = as_id("1bNxVfC8klsCmpQ7VvbDycL0mYsPUYUgA"), c_fp)
+drive_update(file = as_id("1CtrRh1BSyOeaxVHELan_I6vk0ePKBFlC"), c_fp)

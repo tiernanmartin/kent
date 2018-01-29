@@ -26,11 +26,11 @@ htmltools::tagList(rmarkdown::html_dependency_font_awesome())
 
 # see root_file("2-communication/1-rnotebooks/tmp/tmp-geocode-ce-cases.R")
 
-c_fp <- root_file("1-data/3-interim/code-enforcement-cases-2017.gpkg")
+c_fp <- root_file("1-data/3-interim/code-enforcement-cases-2014-2017.gpkg")
 
 c_load <- c_fp %>% 
   make_or_read({
-    dr_id <- as_id("")
+    dr_id <- as_id("1CtrRh1BSyOeaxVHELan_I6vk0ePKBFlC")
     
     drive_read(dr_id = dr_id,
                .tempfile = FALSE,
@@ -230,4 +230,12 @@ leaflet() %>%
   setView(kent_cntr$LNG,kent_cntr$LAT,  12)
 # SAVE & UPLOAD TO DRIVE ---- 
 
-# add save code here
+c_bldg_fp <- root_file("1-data/3-interim/ce-cases-resbldg-2014-2017.gpkg")
+
+drive_folder_id <- as_id("0B5Pp4V6eCkhrRFRYbWpoM3pWYkU") # ~/3-interim/
+
+st_write(obj = c_bldg_sf,dsn = c_bldg_fp, layer = 'ce_cases_resbldg_2014_2017', driver = 'GPKG', layer_options = 'OVERWRITE=TRUE')
+
+drive_upload(media = c_bldg_fp, path = drive_folder_id)
+
+drive_update(file = as_id("1CwOjQ8mk-9ZSAKUBmCw1l6dGptEM0O_1"), c_bldg_fp)
