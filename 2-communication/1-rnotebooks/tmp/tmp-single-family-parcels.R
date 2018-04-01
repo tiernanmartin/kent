@@ -280,7 +280,8 @@ str_c(
  
 # [1] "15814 - 17144"
 
-
+1e5 / (renter_hu - renter_hu_sf - renter_hu_moe) * 3
+# [1] 18.97053
 
 
 
