@@ -109,8 +109,8 @@ geocode_fun <- function(id, address){
   } else if(between(as.integer(id),2501,5000)){
     return(
     geocode_url(address, 
-                auth="standard_api", 
-                privkey="AIzaSyAC19c3TtQwrSiQYKYDaf-9nDIqahirnD8",
+                auth="standard_api",  
+                privkey="AIzaSyAC19c3TtQwrSiQYKYDaf-9nDIqahirnD8", 
                 clean=TRUE, 
                 add_date='today', 
                 verbose=TRUE) %>% 
@@ -119,8 +119,8 @@ geocode_fun <- function(id, address){
   } else if(between(as.integer(id),5001,7500)){
     return(
     geocode_url(address, 
-                auth="standard_api", 
-                privkey="AIzaSyCYhgjxQ0PRqo9VTHUrK1KnzaI65AGwZgs",
+                auth="standard_api",  
+                privkey="AIzaSyCYhgjxQ0PRqo9VTHUrK1KnzaI65AGwZgs", 
                 clean=TRUE, 
                 add_date='today', 
                 verbose=TRUE) %>% 
@@ -141,8 +141,9 @@ geocode_fun <- function(id, address){
 
 # slow operation
 
+
 c_14_17_geocode <- c_14_17 %>%
-  rownames_to_column("ID") %>% 
+  rownames_to_column("ID") %>%  
   mutate(ADDR_TBL = map2(ID,ADDR,geocode_fun))
   
 
